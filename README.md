@@ -1,119 +1,69 @@
-# 🖥️ Shared Desktop StdLib (Rust & C#)
+# 🚀 Shared Desktop StdLib (Rust & C#)
 
-A high-performance, cross-language standard library designed for desktop applications. This project provides a set of common utility modules implemented in **Rust** for safety and speed, exposed via a C-compatible FFI (Foreign Function Interface) for seamless consumption in **C#/.NET**.
+A professional-grade, cross-language standard library for high-performance desktop applications. This project enables C# developers to offload compute-heavy, system-level, or security-critical tasks to **Rust** while maintaining a seamless .NET developer experience.
 
-## 🏗️ Architecture
+## 💎 The "Best of Both Worlds" Architecture
 
-The library is compiled as a `cdylib` (C-compatible dynamic library). It follows a "Gateway" pattern:
-- **Internal Logic**: Pure, idiomatic Rust modules.
-- **FFI Gateway**: A flat C-API layer that handles pointer marshalling and memory management.
-- **C# Wrapper**: P/Invoke signatures that allow .NET to call Rust functions as if they were native.
+This library isn't just a set of utilities; it's designed to leverage the specific strengths of each ecosystem:
 
-## 🚀 Quick Start
+### 🦀 Rust $\rightarrow$ C# (Power & Safety)
+- **Fearless Concurrency**: Uses `Rayon` for data-parallel processing across all CPU cores without data races.
+- **Linear-Time Regex**: Leverages Rust's `regex` crate to avoid catastrophic backtracking.
+- **Memory-Safe Crypto**: Implements SHA256 and Base64 using Rust's strict type system.
+- **Low-Level OS Integration**: Direct access to system APIs and efficient file I/O.
 
-### Prerequisites
-- [Rust](https://rustup.rs/) (Stable)
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
-
-### 1. Build the Library
-```bash
-cargo build --release
-```
-The binary will be located at `target/release/libshared_std_rust_csharp.so` (Linux), `.dll` (Windows), or `.dylib` (macOS).
-
-### 2. Run the Demo
-```bash
-# Set the library path for the .NET runtime (Linux example)
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/target/debug
-cd csharp_example
-dotnet run
-```
+### 🔷 C# $\rightarrow$ Rust (Flexibility & UI)
+- **Event Bridge**: Implements a Reverse FFI system where Rust can trigger C# delegates, enabling Rust background tasks to update C# UIs in real-time.
+- **Rapid Prototyping**: High-level application flow and UI managed in .NET.
 
 ---
 
 ## 📚 API Reference
 
-### 🛠️ 1. System & Environment (`SysInfo`)
-Provides basic information about the host machine.
-
-| Function | C# Signature | Description |
+### ⚡ High-Performance Modules
+| Function | Signature | Description |
 | :--- | :--- | :--- |
-| `desktop_get_os` | `IntPtr desktop_get_os()` | Returns the OS name (e.g., "linux", "windows"). |
-| `desktop_get_arch` | `IntPtr desktop_get_arch()` | Returns the CPU architecture (e.g., "x86_64"). |
+| `parallel_sum` | `double(IntPtr data, int len)` | Parallel reduction sum of a double array. |
+| `parallel_square` | `void(IntPtr data, int len)` | Parallel mutation of array elements. |
+| `regex_is_match` | `bool(string pat, string txt)` | High-speed regex matching. |
+| `regex_replace` | `IntPtr(string pat, string txt, string repl)` | High-speed global string replacement. |
 
-### 📝 2. Logging System (`Logging`)
-A thread-safe logger that allows C# to leverage Rust's synchronization.
-
-| Function | C# Signature | Description |
+### 🔔 Event Bridge (Reverse FFI)
+| Function | Signature | Description |
 | :--- | :--- | :--- |
-| `desktop_log` | `void desktop_log(int level, string msg)` | Logs a message. Levels: `0: Info`, `1: Warn`, `2: Error`. |
+| `register_event_callback` | `void(IntPtr callback)` | Registers a C# delegate to be called by Rust. |
+| `trigger_rust_event` | `void(string message)` | Triggers the registered C# callback. |
 
-### 📁 3. File System Utilities (`FS Utils`)
-Desktop-centric file and directory operations.
-
-| Function | C# Signature | Description |
+### 🛡️ Security & Networking
+| Function | Signature | Description |
 | :--- | :--- | :--- |
-| `desktop_ensure_dir` | `bool desktop_ensure_dir(string path)` | Checks if a directory exists; creates it if it doesn't. |
-| `desktop_get_ext` | `IntPtr desktop_get_ext(string path)` | Extracts the file extension from a path. |
+| `crypto_sha256` | `IntPtr(string input)` | Computes a SHA256 hex hash. |
+| `crypto_encode_base64` | `IntPtr(string input)` | Base64 encodes a string. |
+| `net_http_get` | `IntPtr(string url)` | Synchronous HTTP GET request. |
+| `shell_open_url` | `bool(string url)` | Opens a URL in the default system browser. |
 
-### ⚙️ 4. Configuration Manager (`Config`)
-A stateful JSON-based settings manager. It uses **Opaque Pointers** to maintain state in Rust.
-
-| Function | C# Signature | Description |
-| :--- | :--- | :--- |
-| `config_load` | `IntPtr config_load(string path)` | Loads a JSON config from disk into Rust memory. |
-| `config_set` | `void config_set(IntPtr cfg, string k, string v)` | Updates a setting in the loaded config. |
-| `config_get` | `IntPtr config_get(IntPtr cfg, string k)` | Retrieves a setting value. |
-| `config_save` | `bool config_save(IntPtr cfg, string path)` | Persists the current config to a JSON file. |
-| `config_destroy` | `void config_destroy(IntPtr cfg)` | Frees the Rust-allocated config object. |
-
-### 🔢 5. Core Utilities (`Math` & `Text`)
-Stateless helper functions.
-
-| Function | C# Signature | Description |
-| :--- | :--- | :--- |
-| `math_add` | `int math_add(int a, int b)` | Adds two integers. |
-| `math_multiply` | `int math_multiply(int a, int b)` | Multiplies two integers. |
-| `text_to_uppercase` | `IntPtr text_to_uppercase(string s)` | Converts string to uppercase. |
-| `text_reverse` | `IntPtr text_reverse(string s)` | Reverses the characters in a string. |
-
-### 👤 6. State Management (`Session`)
-Demonstrates how to manage complex Rust structs from C#.
-
-| Function | C# Signature | Description |
-| :--- | :--- | :--- |
-| `session_create` | `IntPtr session_create(uint id, string name)` | Creates a new user session. |
-| `session_add_score` | `void session_add_score(IntPtr s, int pts)` | Modifies state within the session. |
-| `session_get_score` | `int session_get_score(IntPtr s)` | Reads state from the session. |
-| `session_destroy` | `void session_destroy(IntPtr s)` | Frees the session memory. |
+### ⚙️ Desktop Utilities
+| Module | Capabilities |
+| :--- | :--- |
+| **Config** | Stateful JSON settings (`config_load`, `config_save`, `config_set`). |
+| **FS Utils** | Folder creation, extension extraction (`desktop_ensure_dir`, `desktop_get_ext`). |
+| **SysInfo** | OS and Architecture detection (`desktop_get_os`, `desktop_get_arch`). |
+| **Logging** | Thread-safe system-wide logging (`desktop_log`). |
 
 ---
 
-## ⚠️ Critical: Memory Management
+## 🛠️ Getting Started
 
-Because Rust and C# use different memory management systems (Manual/Ownership vs. Garbage Collection), you must follow these rules to avoid memory leaks:
-
-### 1. String Handling
-Any function returning an `IntPtr` that represents a string (like `desktop_get_os` or `text_reverse`) allocates memory on the Rust heap. You **must** free it using:
-```csharp
-IntPtr ptr = text_reverse("Hello");
-string result = Marshal.PtrToStringAnsi(ptr);
-free_string(ptr); // <--- REQUIRED
+### 1. Build
+```bash
+cargo build --release
 ```
 
-### 2. Stateful Objects (Handles)
-Functions like `config_load` and `session_create` return a pointer to a Rust object. C# treats this as an opaque handle. You must call the corresponding destroy function when finished:
-```csharp
-IntPtr cfg = config_load("settings.json");
-// ... use config ...
-config_destroy(cfg); // <--- REQUIRED
-```
+### 2. C# Integration
+Copy `libshared_std_rust_csharp.so` (or `.dll`) to your execution folder and use the `DllImport` signatures provided in the `csharp_example` project.
 
-## 🛠️ Extending the Library
+## ⚠️ Memory Safety Rules
 
-To add a new module:
-1. Create a new file in `src/modules/my_module.rs`.
-2. Implement your logic using idiomatic Rust.
-3. Declare the module in `src/lib.rs` using `mod modules { pub mod my_module; }`.
-4. Create `#[unsafe(no_mangle)] pub extern "C"` wrapper functions in `src/lib.rs`.
-5. Add the `[DllImport]` signature in C#.
+1. **Strings**: Any `IntPtr` returned as a string **must** be freed with `free_string(ptr)`.
+2. **Handles**: Any `IntPtr` representing a stateful object (e.g., `AppConfig`, `UserSession`) **must** be destroyed using the corresponding `destroy` function.
+3. **Callbacks**: When passing a delegate to Rust, ensure the delegate is pinned or stored in a static variable to prevent the .NET Garbage Collector from moving it.

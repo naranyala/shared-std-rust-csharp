@@ -39,6 +39,19 @@ class DesktopApp
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void free_string(IntPtr ptr);
 
+    // --- New StdLib Imports ---
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr crypto_sha256(string input);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr crypto_encode_base64(string input);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern bool shell_open_url(string url);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr net_http_get(string url);
+
     static void Main()
     {
         Console.WriteLine("=== Desktop Shared StdLib Demo ===\n");
@@ -69,19 +82,33 @@ class DesktopApp
         // 4. Configuration
         string configPath = "./settings.json";
         IntPtr cfg = config_load(configPath);
-        
         config_set(cfg, "theme", "dark");
-        config_set(cfg, "window_width", "1280");
-        
         IntPtr valPtr = config_get(cfg, "theme");
         Console.WriteLine($"Config Theme: {Marshal.PtrToStringAnsi(valPtr)}");
         free_string(valPtr);
-
-        if (config_save(cfg, configPath)) {
-            Console.WriteLine("Settings saved to disk.");
-        }
-
+        config_save(cfg, configPath);
         config_destroy(cfg);
+
+        // 5. Crypto
+        IntPtr hashPtr = crypto_sha256("SecretPassword123");
+        Console.WriteLine($"SHA256 Hash: {Marshal.PtrToStringAnsi(hashPtr)}");
+        free_string(hashPtr);
+
+        IntPtr b64Ptr = crypto_encode_base64("Hello Rust!");
+        Console.WriteLine($"Base64: {Marshal.PtrToStringAnsi(b64Ptr)}");
+        free_string(b64Ptr);
+
+        // 6. Networking
+        Console.WriteLine("Fetching google.com (first 100 chars)...");
+        IntPtr netPtr = net_http_get("https://www.google.com");
+        string netRes = Marshal.PtrToStringAnsi(netPtr);
+        Console.WriteLine(netRes.Substring(0, Math.Min(100, netRes.Length)));
+        free_string(netPtr);
+
+        // 7. Shell
+        Console.WriteLine("Opening browser to GitHub...");
+        shell_open_url("https://github.com");
+
         Console.WriteLine("\nDemo finished.");
     }
 }

@@ -11,25 +11,28 @@ public class LibraryTests
     public static extern int math_add(int a, int b);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int math_multiply(int a, int b);
+    public static extern double parallel_sum(IntPtr data, int len);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr text_to_uppercase(string name);
+    public static extern void parallel_square(IntPtr data, int len);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr text_reverse(string name);
+    public static extern bool regex_is_match(string pattern, string text);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr session_create(uint id, string name);
+    public static extern IntPtr regex_replace(string pattern, string text, string repl);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void session_add_score(IntPtr session, int points);
+    public static extern void register_event_callback(IntPtr callback);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int session_get_score(IntPtr session);
+    public static extern void trigger_rust_event(string message);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void session_destroy(IntPtr session);
+    public static extern IntPtr crypto_sha256(string input);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr crypto_encode_base64(string input);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void free_string(IntPtr ptr);
@@ -37,68 +40,76 @@ public class LibraryTests
     // --- Tests ---
 
     [Fact]
-    public void TestMathAdd()
+    public void TestParallelSum()
     {
-        Assert.Equal(30, math_add(10, 20));
-        Assert.Equal(0, math_add(-10, 10));
-    }
-
-    [Fact]
-    public void TestMathMultiply()
-    {
-        Assert.Equal(200, math_multiply(10, 20));
-        Assert.Equal(-20, math_multiply(10, -2));
-    }
-
-    [Fact]
-    public void TestTextUppercase()
-    {
-        string input = "hello rust";
-        IntPtr ptr = text_to_uppercase(input);
-        try
-        {
-            string result = Marshal.PtrToStringAnsi(ptr);
-            Assert.Equal("HELLO RUST", result);
+        double[] data = { 1.0, 2.0, 3.0, 4.0 };
+        GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+        try {
+            double sum = parallel_sum(handle.AddrOfPinnedObject(), data.Length);
+            Assert.Equal(10.0, sum);
+        } finally {
+            handle.Free();
         }
-        finally
-        {
+    }
+
+    [Fact]
+    public void TestParallelSquare()
+    {
+        double[] data = { 1.0, 2.0, 3.0, 4.0 };
+        GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+        try {
+            parallel_square(handle.AddrOfPinnedObject(), data.Length);
+            Assert.Equal(1.0, data[0]);
+            Assert.Equal(4.0, data[1]);
+            Assert.Equal(9.0, data[2]);
+            Assert.Equal(16.0, data[3]);
+        } finally {
+            handle.Free();
+        }
+    }
+
+    [Fact]
+    public void TestRegex()
+    {
+        Assert.True(regex_is_match(@"^\d+$", "12345"));
+        Assert.False(regex_is_match(@"^\d+$", "123a5"));
+        
+        IntPtr ptr = regex_replace("foo", "foo bar foo", "baz");
+        try {
+            Assert.Equal("baz bar baz", Marshal.PtrToStringAnsi(ptr));
+        } finally {
             free_string(ptr);
         }
     }
 
     [Fact]
-    public void TestTextReverse()
+    public void TestCrypto()
     {
-        string input = "rust";
-        IntPtr ptr = text_reverse(input);
-        try
-        {
-            string result = Marshal.PtrToStringAnsi(ptr);
-            Assert.Equal("tsur", result);
-        }
-        finally
-        {
-            free_string(ptr);
-        }
+        IntPtr hashPtr = crypto_sha256("hello");
+        Assert.Equal("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", Marshal.PtrToStringAnsi(hashPtr));
+        free_string(hashPtr);
+
+        IntPtr b64Ptr = crypto_encode_base64("hello");
+        Assert.Equal("aGVsbG8=", Marshal.PtrToStringAnsi(b64Ptr));
+        free_string(b64Ptr);
     }
 
     [Fact]
-    public void TestSessionLifecycle()
+    public void TestEventBridge()
     {
-        IntPtr session = session_create(123, "TestUser");
-        try
-        {
-            Assert.Equal(0, session_get_score(session));
-            
-            session_add_score(session, 100);
-            Assert.Equal(100, session_get_score(session));
-            
-            session_add_score(session, -50);
-            Assert.Equal(50, session_get_score(session));
-        }
-        finally
-        {
-            session_destroy(session);
-        }
+        bool wasCalled = false;
+        // This delegate must be kept alive to prevent GC
+        EventDelegate callback = (ptr) => {
+            wasCalled = true;
+            free_string(ptr); // Rust sends a string, we must free it
+        };
+
+        IntPtr callbackPtr = Marshal.GetFunctionPointerForDelegate(callback);
+        register_event_callback(callbackPtr);
+        
+        trigger_rust_event("Event Triggered!");
+        Assert.True(wasCalled);
     }
+
+    delegate void EventDelegate(IntPtr message);
 }

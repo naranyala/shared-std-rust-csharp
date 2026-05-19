@@ -9,6 +9,12 @@ mod modules {
     pub mod fs_utils;
     pub mod sys_info;
     pub mod logging;
+    pub mod crypto;
+    pub mod shell;
+    pub mod net;
+    pub mod parallel;
+    pub mod regex_engine;
+    pub mod events;
 }
 
 // --- Common Utilities ---
@@ -97,6 +103,81 @@ pub extern "C" fn free_string(ptr: *mut c_char) {
         unsafe {
             let _ = CString::from_raw(ptr);
         }
+    }
+}
+
+// --- Parallel Processing FFI ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn parallel_sum(data: *const f64, len: usize) -> f64 {
+    let slice = unsafe { std::slice::from_raw_parts(data, len) };
+    modules::parallel::parallel_sum(slice)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn parallel_square(data: *mut f64, len: usize) {
+    let slice = unsafe { std::slice::from_raw_parts_mut(data, len) };
+    modules::parallel::parallel_square(slice)
+}
+
+// --- Regex FFI ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn regex_is_match(pattern: *const c_char, text: *const c_char) -> bool {
+    modules::regex_engine::is_match(&from_cstring(pattern), &from_cstring(text))
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn regex_replace(pattern: *const c_char, text: *const c_char, repl: *const c_char) -> *mut c_char {
+    to_cstring(modules::regex_engine::replace_all(&from_cstring(pattern), &from_cstring(text), &from_cstring(repl)))
+}
+
+// --- Event Bridge FFI (The "Vice Versa") ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn register_event_callback(callback: extern "C" fn(*const c_char)) {
+    modules::events::register_callback(callback);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn trigger_rust_event(message: *const c_char) {
+    modules::events::trigger_event(&from_cstring(message));
+}
+
+// --- Crypto FFI ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn crypto_sha256(input: *const c_char) -> *mut c_char {
+    to_cstring(modules::crypto::hash_sha256(&from_cstring(input)))
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn crypto_encode_base64(input: *const c_char) -> *mut c_char {
+    to_cstring(modules::crypto::encode_base64(&from_cstring(input)))
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn crypto_decode_base64(input: *const c_char) -> *mut c_char {
+    match modules::crypto::decode_base64(&from_cstring(input)) {
+        Some(s) => to_cstring(s),
+        None => std::ptr::null_mut(),
+    }
+}
+
+// --- Shell FFI ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn shell_open_url(url: *const c_char) -> bool {
+    modules::shell::open_url(&from_cstring(url))
+}
+
+// --- Net FFI ---
+
+#[unsafe(no_mangle)]
+pub extern "C" fn net_http_get(url: *const c_char) -> *mut c_char {
+    match modules::net::http_get(&from_cstring(url)) {
+        Ok(s) => to_cstring(s),
+        Err(e) => to_cstring(format!("Error: {}", e)),
     }
 }
 
@@ -209,5 +290,26 @@ mod tests {
         assert_eq!(session_get_score(session), 50);
         
         session_destroy(session);
+    }
+
+    #[test]
+    fn test_ffi_parallel() {
+        let data = vec![1.0, 2.0, 3.0, 4.0];
+        let sum = parallel_sum(data.as_ptr(), data.len());
+        assert_eq!(sum, 10.0);
+    }
+
+    #[test]
+    fn test_ffi_regex() {
+        let pat = CString::new(r"^\d+$").unwrap();
+        let txt = CString::new("123").unwrap();
+        assert!(regex_is_match(pat.as_ptr(), txt.as_ptr()));
+    }
+
+    #[test]
+    fn test_ffi_events() {
+        extern "C" fn dummy_cb(_: *const c_char) {}
+        register_event_callback(dummy_cb);
+        trigger_rust_event(CString::new("hi").unwrap().as_ptr());
     }
 }
