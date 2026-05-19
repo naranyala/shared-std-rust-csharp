@@ -1,2 +1,5 @@
 /target
 /dist
+
+csharp_tests/obj
+csharp_tests/bin
