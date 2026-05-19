@@ -1,0 +1,15 @@
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/bin/Debug/net10.0/Example
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/bin/Debug/net10.0/Example.deps.json
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/bin/Debug/net10.0/Example.runtimeconfig.json
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/bin/Debug/net10.0/Example.dll
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/bin/Debug/net10.0/Example.pdb
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.GeneratedMSBuildEditorConfig.editorconfig
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.AssemblyInfoInputs.cache
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.AssemblyInfo.cs
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.csproj.CoreCompileInputs.cache
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.sourcelink.json
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.dll
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/refint/Example.dll
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.pdb
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/Example.genruntimeconfig.cache
+/media/naranyala/Data/projects-remote/shared-std-rust-csharp/csharp_example/obj/Debug/net10.0/ref/Example.dll
